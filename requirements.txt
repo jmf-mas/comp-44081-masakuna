@@ -1,0 +1,6 @@
+pandas==1.5.3
+seaborn==0.12.2
+matplotlib==3.8.0
+statsmodels==0.14.0
+scikit-learn==1.6.1
+prophet==1.1.7
