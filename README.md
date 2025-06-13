@@ -44,13 +44,87 @@ Finally, you should prepare a short summary of what you did, why it is better th
 
 ## Submission
 
-Provide a link to the completed modelling exercise on a GitHub account. You can choose to keep the repository private or public. If it is private, you must share your repository with the [gom-ta GitHub account](https://github.com/gom-ta). 
+Provide a link to the completed modelling exercise on a GitHub account. You can choose to keep the repository private or public. If it is private, you must share your repository with the [gom-ta GitHub account](https://github.com/gom-ta).
+
+##
+
+Candidate<br>
+**Jordan Felicien MASAKUNA**
+
+Date<br>
+**12 June 2025**
+
+### Accessible description of the work (bullet points) for a non-technical client
+
+- This code uses forecasting tools, to predict future Sales and Redemption Counts in a time-based data. It organizes and normalizes the past information, and identifies recurring yearly and weekly patterns. Once learned, the model generates future forecasts.
+- It is assumed the following:
+  - data points are accurate and complete, and that the observed target patterns are representative. 
+  - the historical seasonal patterns (weekly, monthly, quarterly) persist. 
+  - both target variables align with logistic growth. 
+  - there is a single dominant seasonality (e.g., weekly or monthly) and that the series can be made stationary with differencing to model linear relationships and constant variance of residuals.
+
+- Comparing two forecasting approaches of the base model, the first version (which was given) assumes a purely seasonal, non-negative signal, which is less realistic for typical time series as it ignores underlying trends and can lead to underestimation bias, especially after data normalization, making it suitable only for strictly seasonal and non-negative data. 
+- In contrast, the second version (our improvement) is more realistic, assuming seasonality around a stable average baseline, thus better capturing real-world fluctuations and resulting in lower bias and more balanced forecasts that align well with normalized data, making it more suitable for general forecasting tasks.
+
+### A more detailed description of the work with technical specifics
+
+**Dataset preparation.**
+- After analyzing the statistical characteristics of the target variables, I found that they have large values and high standard deviations. This can pose a problem, as large values may disproportionately influence the loss function, potentially leading to numerical instability, loss function sensitivity and erratic updates during training.
+- To mitigate this issue, we normalize the target values within a fixed range. To determine the most suitable range, we conducted experiments with several scaling options and selected the one that yielded the most stable and accurate results. 
+- I applied Min-Max normalization to scale the target values into the range [0.5, 1].
+
+**Forecasting models.**
+- I improved the baseline model that was provided.
+- I implemented another forecasting model using the Prophet framework.
+
+**First version of  the base model.** 
+- It directly utilizes the ```res.seasonal``` component from ```seasonal_decompose``` and clips any negative values to zero. This implies an assumption that the seasonal contribution itself cannot be negative. 
+- It performs no explicit adjustment by the overall mean of the target. It explicitly applies ```max(0, x)``` to the seasonal component to remove negative values. 
+- The prediction for a given day of the year is simply its non-negative seasonal value. 
+- High risk of systematic underestimation bias. Clipping negative seasonal variations and the absence of a mean adjustment can significantly distort the predictions .
+- Outputs are inherently greater than or equal to zero due to the clipping.
+
+*Improved version of  the base model.* 
+- It uses a centered version of ```res.seasonal``` (i.e., ```seasonal - seasonal.mean()```). This assumes the seasonal effect is a deviation around a baseline rather than always being non-negative.
+- It adjusts predictions by adding the overall mean (base level) of the target from the training data. This aims to restore the predictions to the true scale of the data.
+- It does not apply clipping during the seasonal component's calculation, assuming that centering the seasonal component and adding the base mean will generally avoid unrealistic negative values in the final prediction.
+- The final prediction is calculated as ```mean(target) + centered_seasonality``` for the corresponding day of the year.
+- Lower bias risk. Centering the seasonal component and re-introducing the base level (mean) helps in restoring the original scale and provides more balanced and aligned forecasts, leading to more realistic estimations.
+- Outputs may include negative values if the ```centered_seasonality``` and ```mean(target)``` combine to a negative sum. 
+
+**Prophet model.**
+- Model configuration. A Prophet object is instantiated with several key parameters:
+   - growth='logistic': This is specifically chosen to model the target variable's trend with explicit saturation limits, aligning with the assumption that the target (e.g., scaled sales count 'sc') operates within defined upper (cap=1.0) and lower (floor=0.5) bounds.
+   - yearly_seasonality=True, weekly_seasonality=True: Configured to capture annual and weekly recurring patterns, which are typical in sales time series.
+   - daily_seasonality=False: Deliberately excluded, as daily granularity is usually sufficient for sales counts without needing sub-daily patterns.
+   - seasonality_mode='additive': Specifies that seasonal effects are linearly added to the trend component.
 
 
-## Environment
+### Environment
 
-You will need to install several packages to run the existing code
+You will need to prepare your environment to run this code
+
+Create a Conda environment
 
 ```python
-pip install pandas seaborn matplotlib statsmodels scikit-learn
+conda create --name comp_44081 python=3.8
+```
+
+Activate your environment
+
+```python
+conda activate comp_44081
+```
+
+Libs installation
+
+```python
+pip install -r requirements.txt
+```
+
+Add the created environment into Jupyter Notebook
+
+```python
+conda install -c anaconda ipykernel
+python -m ipykernel install --user --name=comp_44081
 ```
