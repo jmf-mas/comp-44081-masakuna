@@ -74,7 +74,7 @@ Date<br>
 - I applied Min-Max normalization to scale the target values into the range [0.5, 1].
 
 **Forecasting models.**
-- I improved the baseline model that was provided.
+- I improved the baseline model that was provided (I reduced MAPE from at least 0.85 to at most 0.15 for different splits).
 - I implemented another forecasting model using the Prophet framework.
 
 **First version of  the base model.** 
@@ -102,7 +102,7 @@ Date<br>
 
 ### Environment
 
-You will need to prepare your environment to run this code
+You will need to prepare your environment to run this code. The dataset should be placed in a folder named */data* at the project's root.
 
 Create a Conda environment
 
